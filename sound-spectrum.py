@@ -25,8 +25,6 @@ def animate(i, line, stream, wf, MAX_y):
   # Read n*nFFT frames from stream, n > 0
   N = int(max(stream.get_read_available() / nFFT, 1) * nFFT)
   data = stream.read(N)
-  if SAVE:
-    wf.writeframes(data)
 
   # Unpack data, LRLRLR...
   y = np.array(struct.unpack("%dh" % (N * CHANNELS), data)) / MAX_y
@@ -36,11 +34,10 @@ def animate(i, line, stream, wf, MAX_y):
 
   Y_L = np.fft.fft(y_L, nFFT)
   Y_R = np.fft.fft(y_R, nFFT)
-
+  
 
   # Sewing FFT of two channels together, DC part uses right channel's
   Y = abs(np.hstack((Y_L[int(-nFFT / 2):-1], Y_R[:int(nFFT / 2)])))
-
   line.set_ydata(Y)
   return line,
 
@@ -63,7 +60,6 @@ def main():
   x_f = 1.0 * np.arange(-nFFT / 2 + 1, nFFT / 2) / nFFT * RATE
   ax = fig.add_subplot(211, title=TITLE, xlim=(x_f[0], x_f[-1]),
                        ylim=(0, 2 * np.pi * nFFT ** 2 / RATE))
-  print('----->', ax)
   ax.set_yscale('symlog')
 
   line, = ax.plot(x_f, np.zeros(nFFT - 1))
@@ -83,12 +79,6 @@ def main():
 
   frames = None
   wf = None
-  if SAVE:
-    frames = int(FPS * SAVE)
-    wf = wave.open('./cut/nerve-1.wav', 'wb')
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(p.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
 
   stream = p.open(format=FORMAT,
                   channels=CHANNELS,
@@ -102,17 +92,11 @@ def main():
     interval=1000.0 / FPS, blit=True
   )
 
-  if SAVE:
-    ani.save('test.mp4', fps=FPS)
-  else:
-    plt.show()
+  plt.show()
 
   stream.stop_stream()
   stream.close()
   p.terminate()
-
-  if SAVE:
-    wf.close()
 
 
 if __name__ == '__main__':
