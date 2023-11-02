@@ -19,6 +19,30 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
 
+def animate_stream(i, line, stream, wf, MAX_y):
+
+  # Read n*nFFT frames from stream, n > 0
+  N = int(max(stream.get_read_available() / nFFT, 1) * nFFT)
+  data = stream.read(N)
+
+  # Unpack data, LRLRLR...
+  y = np.array(struct.unpack("%dh" % (N * CHANNELS), data)) / MAX_y
+
+  y_L = y[::2]
+  y_R = y[1::2]
+ 
+
+  # Sewing FFT of two channels together, DC part uses right channel's
+  Y = np.hstack((y_L[int(-nFFT):-1], y_R[:int(nFFT)]));
+
+  line.set_ydata(Y)
+  return line,
+
+def init_stream(line):
+
+  # This data is a clear frame for animation
+  line.set_ydata(np.zeros(nFFT * 2 - 1))
+  return line,
 
 def animate(i, line, stream, wf, MAX_y):
 
@@ -58,11 +82,24 @@ def main():
 
   # Frequency range
   x_f = 1.0 * np.arange(-nFFT / 2 + 1, nFFT / 2) / nFFT * RATE
-  ax = fig.add_subplot(211, title=TITLE, xlim=(x_f[0], x_f[-1]),
-                       ylim=(0, 2 * np.pi * nFFT ** 2 / RATE))
-  ax.set_yscale('symlog')
+  stream_x_f = 1.0 * np.arange(-nFFT + 1, nFFT) / nFFT * RATE
+
+  fig, axs = plt.subplots(2, 1, layout='constrained')
+ 
+  stream_x= axs[0];
+  ax= axs[1];
+
+  stream_x.set_yscale('symlog');
+  stream_x.set_xlim(stream_x_f[0], stream_x_f[-1]);
+  # stream_x.set_ylim(0, 2 * np.pi * nFFT ** 2 / RATE);
+
+  ax.set_yscale('symlog');
+  ax.set_xlim(x_f[0], x_f[-1]);
+  ax.set_ylim(0, 2 * np.pi * nFFT ** 2 / RATE);
+  
 
   line, = ax.plot(x_f, np.zeros(nFFT - 1))
+  stream_line, = stream_x.plot(stream_x_f, np.zeros(nFFT * 2 - 1))
 
   # Change x tick labels for left channel
   def change_xlabel(evt):
@@ -89,6 +126,12 @@ def main():
   ani = animation.FuncAnimation(
     fig, animate, frames,
     init_func=lambda: init(line), fargs=(line, stream, wf, MAX_y),
+    interval=1000.0 / FPS, blit=True
+  )
+
+  ani_stream = animation.FuncAnimation(
+    fig, animate_stream, frames,
+    init_func=lambda: init_stream(stream_line), fargs=(stream_line, stream, wf, MAX_y),
     interval=1000.0 / FPS, blit=True
   )
 
