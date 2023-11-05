@@ -2,7 +2,7 @@ import numpy as np
 import struct
 import matplotlib.animation as animation;
 
-from src.modules.config_module import CHANNELS, nFFT, WAVE_RANGE, RATE, FPS
+from src.modules.config_module import CHANNELS, nFFT, WAVE_RANGE, RATE, FPS, MAX_AMPLITUDE
 
 # Wave
 def animate(i, line, stream, wf, MAX_y):
@@ -30,32 +30,23 @@ def clear(line):
 
 def init(fig, ax, stream, sample_size): 
   # Frequency range
-  stream_x_f = 1.0 * np.arange(1, WAVE_RANGE) / nFFT * RATE
+  x_f = 1.0 * np.arange(1, WAVE_RANGE) / nFFT * RATE
  
 
   ax.set_yscale('linear');
-  ax.set_xlim(stream_x_f[0], stream_x_f[-1]);
-  ax.set_ylim(-32767, 32767);  
+  ax.set_xlim(x_f[0], x_f[-1]);
+  ax.set_ylim(-1 *  MAX_AMPLITUDE, MAX_AMPLITUDE);  
   
-  line, = ax.plot(stream_x_f, np.zeros(WAVE_RANGE - 1))
-
-  # Change x tick labels for left channel
-  # def change_xlabel(evt):
-  #   labels = [label.get_text().replace(u'\u2212', '')
-  #             for label in ax.get_xticklabels()]
-  #   ax.set_xticklabels(labels)
-  #   fig.canvas.mpl_disconnect(drawid)
-  # drawid = fig.canvas.mpl_connect('draw_event', change_xlabel)
-  
+  line, = ax.plot(x_f, np.zeros(WAVE_RANGE - 1))
 
   MAX_y = 2.0 ** (sample_size * 8 - 1);
 
   frames = None
   wf = None
-  ani_stream = animation.FuncAnimation(
+  ani = animation.FuncAnimation(
     fig, animate, frames,
     init_func=lambda: clear(line), fargs=(line, stream, wf, MAX_y),
     cache_frame_data=False,
     interval=1000.0 / FPS, blit=True
   )
-  return ani_stream;
+  return ani;
