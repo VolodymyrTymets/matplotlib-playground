@@ -47,7 +47,7 @@ class Fragmenter_Spectrum:
               self.pattern = Y;
               ax.plot(x_f, Y)
 
-    def init(self, fig, ax, stream, sample_size):
+    def init(self, fig, ax, sample_size):
         # Frequency range
         x_f = 1.0 * np.arange(-nFFT / 2 + 1, nFFT / 2) / nFFT * RATE
 
@@ -69,6 +69,7 @@ class Fragmenter_Spectrum:
         self.line = line;
         frames = None
         wf = None
+        stream = None
         ani = animation.FuncAnimation(
             fig, self.animate, frames,
             init_func=lambda: self.clear(line), fargs=(line, stream, wf, MAX_y),

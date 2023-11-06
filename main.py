@@ -1,12 +1,15 @@
 import matplotlib.pyplot as plt
 import pyaudio
+import numpy as np
+import struct
 
-import src.modules.wave_module as wave_module
 import src.modules.spectrum_module as spectrum_module
 
 from src.modules.fragment_module import Fragmenter
+from src.modules.wave_module import Wave
+from src.modules.mic_module import Mic
 from src.modules.fragment_spectrum_module import Fragmenter_Spectrum
-from src.modules.config_module import CHANNELS, WIDTH, HEIGHT, RATE, FORMAT, BUF_SIZE;
+from src.modules.config_module import CHANNELS, WIDTH, HEIGHT, RATE, FORMAT, BUF_SIZE, nFFT;
 
 
 def main():
@@ -16,8 +19,9 @@ def main():
 
   fig, axs = plt.subplots(2, 2, layout='constrained')
   fragmenter_spectrum = Fragmenter_Spectrum();
+  wave = Wave();
   fragmenter = Fragmenter(fragmenter_spectrum);
-
+  mic = Mic([wave.on_data, fragmenter.on_data]);
 
   # Start listening to the microphone
   p = pyaudio.PyAudio();
@@ -26,7 +30,8 @@ def main():
                   channels=CHANNELS,
                   rate=int(rate),
                   input=True,
-                  frames_per_buffer=BUF_SIZE)
+                  frames_per_buffer=BUF_SIZE,
+                  stream_callback=mic.callback)
   stream.start_stream();
   gs = axs[0, 0].get_gridspec()
   axs[0][0].remove()
@@ -34,11 +39,11 @@ def main():
   ax_row = fig.add_subplot(gs[0, 0:])
   
 
-  ani_wave = wave_module.init(fig=fig, ax=ax_row, stream=stream, sample_size=p.get_sample_size(FORMAT))
+  ani_wave = wave.init(fig=fig, ax=ax_row)
   #ani_spectrum = spectrum_module.init(fig=fig, ax=axs[1][0], stream=stream, sample_size=p.get_sample_size(FORMAT))
  
-  ani_spectrum = fragmenter_spectrum.init(fig=fig, ax=axs[1][0], stream=stream, sample_size=p.get_sample_size(FORMAT))
-  ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1], stream=stream, sample_size=p.get_sample_size(FORMAT))
+  ani_spectrum = fragmenter_spectrum.init(fig=fig, ax=axs[1][0], sample_size=p.get_sample_size(FORMAT))
+  ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1])
 
 
   plt.show();
