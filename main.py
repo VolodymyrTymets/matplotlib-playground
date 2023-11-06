@@ -21,9 +21,11 @@ def main():
 
   # Start listening to the microphone
   p = pyaudio.PyAudio();
+  rate =  p.get_device_info_by_index(0)['defaultSampleRate']
+  print('------>', p.get_default_input_device_info())
   stream = p.open(format=FORMAT,
                   channels=CHANNELS,
-                  rate=RATE,
+                  rate=int(rate),
                   input=True,
                   frames_per_buffer=BUF_SIZE)
   stream.start_stream();
@@ -34,7 +36,7 @@ def main():
   
 
   ani_wave = wave_module.init(fig=fig, ax=ax_row, stream=stream, sample_size=p.get_sample_size(FORMAT))
-  # ani_spectrum = spectrum_module.init(fig=fig, ax=axs[1][0], stream=stream, sample_size=p.get_sample_size(FORMAT))
+  #ani_spectrum = spectrum_module.init(fig=fig, ax=axs[1][0], stream=stream, sample_size=p.get_sample_size(FORMAT))
  
   ani_spectrum = fragmenter_spectrum.init(fig=fig, ax=axs[1][0], stream=stream, sample_size=p.get_sample_size(FORMAT))
   ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1], stream=stream, sample_size=p.get_sample_size(FORMAT))

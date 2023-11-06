@@ -29,7 +29,7 @@ class Fragmenter:
             line.set_ydata(self.dafault_fragment);
             #self.fragmenter_spectrum.set_ydata(self.fragmenter_spectrum.get_dafault_fragment());
         else:
-            if(mean_fragment > self.mean_noise * 0.5):
+            if(mean_fragment > self.mean_noise * 1.5):
                 new_fragment = np.concatenate((self.fragment, fragment));
                 new_spectrum_fragment = np.concatenate((self.spectr_fragment, spectrum_fragment));
                 self.fragment = new_fragment;
@@ -65,7 +65,7 @@ class Fragmenter:
 
         # Read n*nFFT frames from stream, n > 0
         N = int(max(stream.get_read_available() / nFFT, 1) * nFFT)
-        data = stream.read(N)
+        data = stream.read(N, exception_on_overflow = False)
 
         # Unpack data, LRLRLR...
         y = np.array(struct.unpack("%dh" % (N * CHANNELS), data))

@@ -5,10 +5,9 @@ import matplotlib.animation as animation;
 from src.modules.config_module import CHANNELS, nFFT, RATE, FPS
 
 def animate(i, line, stream, wf, MAX_y):
-
   # Read n*nFFT frames from stream, n > 0
   N = int(max(stream.get_read_available() / nFFT, 1) * nFFT)
-  data = stream.read(N)
+  data = stream.read(N, exception_on_overflow = False)
 
   # Unpack data, LRLRLR...
   y = np.array(struct.unpack("%dh" % (N * CHANNELS), data)) / MAX_y

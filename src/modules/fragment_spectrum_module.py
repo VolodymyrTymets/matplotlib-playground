@@ -8,9 +8,10 @@ class Fragmenter_Spectrum:
     def __init__(self):
         self.dafault_fragment = np.zeros(nFFT - 1);
         self.line = None;
+        self.MAX_y = None;
 
     def set_ydata(self, Y):
-        self.line.set_ydata(Y)
+        self.line.set_ydata(Y / self.MAX_y)
 
     def get_dafault_fragment(self):
         return self.dafault_fragment;  
@@ -19,7 +20,6 @@ class Fragmenter_Spectrum:
         return line, 
 
     def animate(self, i, line, stream, wf, MAX_y):
-        line.set_ydata(line.get_ydata())
         return line,
 
     def init(self, fig, ax, stream, sample_size):
@@ -28,12 +28,13 @@ class Fragmenter_Spectrum:
 
         ax.set_yscale('symlog');
         ax.set_xlim(x_f[0], x_f[-1]);
-        ax.set_ylim(0, 2 * np.pi * nFFT ** 2);
+        ax.set_ylim(0, 2 * np.pi * nFFT ** 2 / RATE);
 
 
         line, = ax.plot(x_f, np.zeros(nFFT - 1))
         # Because of saving wave, paInt16 will be easier.
         MAX_y = 2.0 ** (sample_size * 8 - 1) * 2
+        self.MAX_y = MAX_y
 
         self.line = line;
         frames = None
