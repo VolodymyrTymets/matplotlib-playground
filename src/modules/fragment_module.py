@@ -9,8 +9,8 @@ class Fragmenter:
         self.mean_noise = 0;
         self.fragment = [];
         self.spectr_fragment = [];
-        self.dafault_fragment = np.zeros(int(RATE / 4));
-        self.x_lendth = int(RATE / 4);
+        self.dafault_fragment = np.zeros(int(RATE / 16));
+        self.x_lendth = int(RATE / 16);
         self.fragmenter_spectrum = fragmenter_spectrum;
         self.y_L = [];  
         self.y_R = [];
@@ -42,7 +42,7 @@ class Fragmenter:
                 self.fragment = new_fragment;
                 self.spectr_fragment = new_spectrum_fragment;
                 if(len(new_fragment) >= RATE / 2):
-                    to_Dispaly = new_fragment[::4];
+                    to_Dispaly = new_fragment[::16];
                     diff = int(self.x_lendth) - len(to_Dispaly);
                     if(diff > 0):
                         zerows = np.zeros(int(diff / 2) + 100);
