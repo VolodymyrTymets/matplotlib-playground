@@ -1,6 +1,7 @@
 import numpy as np
 import struct
-import matplotlib.animation as animation;
+import matplotlib.animation as animation
+import matplotlib.ticker as ticker
 
 from src.modules.config_module import CHANNELS, nFFT, WAVE_RANGE, RATE, FPS, MAX_AMPLITUDE
 
@@ -29,7 +30,9 @@ class Wave:
     x_f = 1.0 * np.arange(1, WAVE_RANGE) / nFFT * RATE
     ax.set_yscale('linear');
     ax.set_xlim(x_f[0], x_f[-1]);
-    ax.set_ylim(-1 *  MAX_AMPLITUDE, MAX_AMPLITUDE);  
+    ax.set_ylim(-1 *  MAX_AMPLITUDE, MAX_AMPLITUDE); 
+    ax.xaxis.set_major_locator(ticker.NullLocator()) 
+    ax.yaxis.set_major_locator(ticker.NullLocator()) 
     
     line, = ax.plot(x_f, np.zeros(WAVE_RANGE - 1))
 

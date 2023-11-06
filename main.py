@@ -13,6 +13,7 @@ from src.modules.config_module import CHANNELS, WIDTH, HEIGHT, RATE, FORMAT, BUF
 
 
 def main():
+  plt.rcParams['toolbar'] = 'None'
   dpi = plt.rcParams['figure.dpi']
   plt.rcParams['savefig.dpi'] = dpi
   plt.rcParams["figure.figsize"] = (1.0 * WIDTH / dpi, 1.0 * HEIGHT / dpi)
@@ -28,7 +29,7 @@ def main():
   rate =  p.get_device_info_by_index(0)['defaultSampleRate']
   stream = p.open(format=FORMAT,
                   channels=CHANNELS,
-                  rate=int(rate),
+                  rate=int(RATE),
                   input=True,
                   frames_per_buffer=BUF_SIZE,
                   stream_callback=mic.callback)
@@ -40,8 +41,6 @@ def main():
   
 
   ani_wave = wave.init(fig=fig, ax=ax_row)
-  #ani_spectrum = spectrum_module.init(fig=fig, ax=axs[1][0], stream=stream, sample_size=p.get_sample_size(FORMAT))
- 
   ani_spectrum = fragmenter_spectrum.init(fig=fig, ax=axs[1][0], sample_size=p.get_sample_size(FORMAT))
   ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1])
 

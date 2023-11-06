@@ -1,6 +1,6 @@
 import numpy as np
-import struct
 import matplotlib.animation as animation;
+import matplotlib.ticker as ticker
 
 from src.modules.config_module import nFFT, WAVE_RANGE, RATE, MAX_AMPLITUDE, CHANNELS, FPS
 
@@ -87,6 +87,8 @@ class Fragmenter:
         ax.set_yscale('linear');
         ax.set_xlim(x_f[0], x_f[-1]);
         ax.set_ylim(-1 * MAX_AMPLITUDE, MAX_AMPLITUDE);  
+        ax.yaxis.set_major_locator(ticker.NullLocator()) 
+        ax.xaxis.set_major_locator(ticker.NullLocator()) 
 
         line, = ax.plot(x_f, self.dafault_fragment)
 
