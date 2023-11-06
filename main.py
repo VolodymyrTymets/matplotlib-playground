@@ -22,7 +22,6 @@ def main():
   # Start listening to the microphone
   p = pyaudio.PyAudio();
   rate =  p.get_device_info_by_index(0)['defaultSampleRate']
-  print('------>', p.get_default_input_device_info())
   stream = p.open(format=FORMAT,
                   channels=CHANNELS,
                   rate=int(rate),

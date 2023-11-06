@@ -1,4 +1,6 @@
 from __future__ import print_function
+import pathlib
+import csv
 
 import struct
 import wave
@@ -13,15 +15,17 @@ WIDTH = 1280
 HEIGHT = 720
 FPS = 25
 
-nFFT = 1024
+nFFT = 512
 BUF_SIZE = 4 * nFFT
 SAMPLE_SIZE = 2
 CHANNELS = 2
 RATE = 44100
 FILE_NAME = './points/1.wav';
+PATH = pathlib.Path(__file__).parent.resolve();
 
 def get_mean_by_fragments(step, MAX_y, file_name):
-  wf = wave.open(file_name, 'rb')
+  file_path = str(PATH) + file_name
+  wf = wave.open(file_path, 'rb')
   assert wf.getnchannels() == CHANNELS
   assert wf.getsampwidth() == SAMPLE_SIZE
   assert wf.getframerate() == RATE
@@ -64,12 +68,14 @@ def main():
   MAX_y = 2.0 ** (SAMPLE_SIZE * 8 - 1)
 
 
-  Y1 = get_mean_by_fragments(step=RATE, MAX_y=MAX_y, file_name='./points/1.wav')
+  Y1 = get_mean_by_fragments(step=RATE, MAX_y=MAX_y, file_name='/in/n-1.wav')
   ax.plot(x_f, Y1)
 
  
-  Y2 = get_mean_by_fragments(step=RATE, MAX_y=MAX_y, file_name='./cut/6mm-1.wav')
+  Y2 = get_mean_by_fragments(step=RATE, MAX_y=MAX_y, file_name='/in/6mm-1.wav')
   ax.plot(x_f, Y2)
+
+
 
   # Y3 = get_mean_by_fragments(step=RATE / FPS, MAX_y=MAX_y, file_name='./points/3.wav')
   # ax.plot(x_f, Y3)
@@ -95,6 +101,13 @@ def main():
   print('---max-->', np.max(Y1))
   print('---max-->', np.max(Y2))
   print('---mean-->', np.mean(persentage))
+
+
+  # to_write = np.mean(np.array((Y1, Y2)), axis=0)
+  # file_path = str(PATH) + '/out/nerve.csv'
+  # with open(file_path, 'w', newline='') as file:
+  #   writer = csv.writer(file)
+  #   writer.writerow(to_write)
 
   plt.show()
 
