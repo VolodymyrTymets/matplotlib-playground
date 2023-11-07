@@ -52,7 +52,7 @@ class Fragmenter_Spectrum:
         # Frequency range
         x_f = 1.0 * np.arange(-nFFT / 2 + 1, nFFT / 2) / nFFT * RATE
 
-        ax.set_yscale('linear');
+        ax.set_yscale('symlog');
         ax.set_xlim(x_f[0], x_f[-1]);
         ax.set_ylim(0, 2 * np.pi * nFFT ** 2 / RATE);
         ax.xaxis.set_major_locator(ticker.NullLocator()) 
