@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.animation as animation;
 import csv
 import pathlib
+import matplotlib.ticker as ticker
 
 from src.modules.config_module import nFFT, WAVE_RANGE, RATE, MAX_AMPLITUDE, CHANNELS, FPS
 
@@ -17,9 +18,9 @@ class Fragmenter_Spectrum:
 
     def conpare(self, Y1, Y2):
         persentage = [];
-        for i in range(len(Y1)):
-            a = Y1[i];
-            b = Y2[i]
+        for i in range(int(len(Y1) / 2)):
+            a = np.abs(Y1[i]);
+            b = np.abs(Y2[i])
             persentage.append(min(a, b) / max(a, b) * 100);    
         return np.mean(persentage);
 
@@ -47,13 +48,14 @@ class Fragmenter_Spectrum:
               self.pattern = Y;
               ax.plot(x_f, Y)
 
-    def init(self, fig, ax, stream, sample_size):
+    def init(self, fig, ax, sample_size):
         # Frequency range
         x_f = 1.0 * np.arange(-nFFT / 2 + 1, nFFT / 2) / nFFT * RATE
 
         ax.set_yscale('symlog');
         ax.set_xlim(x_f[0], x_f[-1]);
         ax.set_ylim(0, 2 * np.pi * nFFT ** 2 / RATE);
+        ax.xaxis.set_major_locator(ticker.NullLocator()) 
 
 
         self.title = ax.text(0.95,0.5, "", bbox={'facecolor':'w', 'alpha':0, 'pad':5},
@@ -69,6 +71,7 @@ class Fragmenter_Spectrum:
         self.line = line;
         frames = None
         wf = None
+        stream = None
         ani = animation.FuncAnimation(
             fig, self.animate, frames,
             init_func=lambda: self.clear(line), fargs=(line, stream, wf, MAX_y),
