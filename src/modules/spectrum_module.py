@@ -2,13 +2,12 @@ import numpy as np
 import struct
 import matplotlib.animation as animation;
 
-from src.modules.config_module import CHANNELS, nFFT, WAVE_RANGE, RATE, FORMAT, FPS
+from src.modules.config_module import CHANNELS, nFFT, RATE, FPS
 
 def animate(i, line, stream, wf, MAX_y):
-
   # Read n*nFFT frames from stream, n > 0
   N = int(max(stream.get_read_available() / nFFT, 1) * nFFT)
-  data = stream.read(N)
+  data = stream.read(N, exception_on_overflow = False)
 
   # Unpack data, LRLRLR...
   y = np.array(struct.unpack("%dh" % (N * CHANNELS), data)) / MAX_y
@@ -32,7 +31,7 @@ def clear(line):
   return line,
 
 def init(fig, ax, stream, sample_size): 
- # Frequency range
+  # Frequency range
   x_f = 1.0 * np.arange(-nFFT / 2 + 1, nFFT / 2) / nFFT * RATE
 
   ax.set_yscale('symlog');
@@ -41,16 +40,6 @@ def init(fig, ax, stream, sample_size):
   
 
   line, = ax.plot(x_f, np.zeros(nFFT - 1))
-
-  # # Change x tick labels for left channel
-  # def change_xlabel(evt):
-  #   labels = [label.get_text().replace(u'\u2212', '')
-  #             for label in ax.get_xticklabels()]
-  #   ax.set_xticklabels(labels)
-  #   fig.canvas.mpl_disconnect(drawid)
-  # drawid = fig.canvas.mpl_connect('draw_event', change_xlabel)
-
-  # Used for normalizing signal. If use paFloat32, then it's already -1..1.
   # Because of saving wave, paInt16 will be easier.
   MAX_y = 2.0 ** (sample_size * 8 - 1) * 2
 
