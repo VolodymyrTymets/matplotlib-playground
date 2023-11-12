@@ -6,7 +6,6 @@ from src.modules.config_module import nFFT, WAVE_RANGE, RATE, MAX_AMPLITUDE, CHA
 
 class Fragmenter:
     def __init__(self, fragmenter_spectrum):
-        self.mean_noise = 0;
         self.fragment = [];
         self.spectr_fragment = [];
         self.dafault_fragment = np.zeros(int(RATE / 16));
@@ -20,42 +19,52 @@ class Fragmenter:
         self.y_L = y_L;
         self.y_R = y_R
         self.y = y;
-
-    def save_noise(self, mean_fragment): 
-        if(self.mean_noise == 0):
-            self.mean_noise = mean_fragment
-            return
-        if(mean_fragment < self.mean_noise):
-            self.mean_noise = mean_fragment
-            return
-        
-    def show_fragment(self, line, fragment, mean_fragment): 
-        if(mean_fragment <= self.mean_noise):
-            self.fragment = [];
-            self.spectrum_fragment = [];
-            line.set_ydata(self.dafault_fragment);
-            #self.fragmenter_spectrum.set_ydata(self.fragmenter_spectrum.get_dafault_fragment());
-        else:
-            if(mean_fragment > self.mean_noise * 1.5):
-                new_fragment = np.concatenate((self.fragment, fragment));
-                new_spectrum_fragment = np.concatenate((self.spectr_fragment, self.y));
-                self.fragment = new_fragment;
-                self.spectr_fragment = new_spectrum_fragment;
-                if(len(new_fragment) >= RATE / 2):
-                    to_Dispaly = new_fragment[::16];
-                    diff = int(self.x_lendth) - len(to_Dispaly);
-                    if(diff > 0):
-                        zerows = np.zeros(int(diff / 2) + 100);
-                        y = np.concatenate((zerows, to_Dispaly, zerows), axis=0)
-                        line.set_ydata(y[0:self.x_lendth])
-                    else:
-                        line.set_ydata(to_Dispaly[0: self.x_lendth])
-
-                    Y_spectrum = self.strem_amplitude_to_spectr_Y(self.spectr_fragment)
-                    self.fragmenter_spectrum.set_ydata(Y_spectrum);
-                    self.fragment = [];
-                    self.spectr_fragment = [];
     
+    def get_percentage_of_max(self, mean_fragment):
+        return 0 if mean_fragment == 0 else int(mean_fragment / (MAX_AMPLITUDE) * 100)
+    
+    def cat_mid(self, y, length):
+        length_half = int(length / 2)
+        all = len(y)
+        mid = int(all / 2);
+        start = mid - length_half if mid - length_half > 0 else 0
+        end = mid + length_half if mid + length_half < all else all
+        res = y[start:end];
+        return res;
+
+    def save_fragment(self, fragment):
+        print('--save---->')
+        new_fragment = np.concatenate((self.fragment, fragment));
+        self.fragment = new_fragment;
+
+        new_spectrum_fragment = np.concatenate((self.spectr_fragment, self.y));
+        self.spectr_fragment = new_spectrum_fragment;
+    
+    def display_fragment(self, fragment, line):
+        print('--display---->')
+        # dispaly amplitude
+        print('--display---->', len(self.fragment))
+        fragment_cut = self.cat_mid(self.fragment, WAVE_RANGE)
+        to_Dispaly = fragment_cut[::16];
+        diff = int(self.x_lendth) - len(to_Dispaly);
+        if(diff > 0):
+            zerows = np.zeros(int(diff / 2) + 100);
+            y = np.concatenate((zerows, to_Dispaly, zerows), axis=0)
+            line.set_ydata(y[0:self.x_lendth])
+        else:
+            line.set_ydata(to_Dispaly[0: self.x_lendth])
+        
+        # dispaly spectrum
+        fragment_cut = self.cat_mid(self.spectr_fragment, RATE)
+        ## todo: vova move to on_data in fragmenter_spectrum
+        Y_spectrum = self.strem_amplitude_to_spectr_Y(fragment_cut)
+        self.fragmenter_spectrum.set_ydata(Y_spectrum);
+    
+    def clear_fragment(self):
+        #print('--clear---->')  
+        self.fragment = [];
+        self.spectr_fragment = [];
+        
 
     def strem_amplitude_to_wave_Y(self):
         return np.hstack((self.y_L, self.y_R));
@@ -71,10 +80,14 @@ class Fragmenter:
 
     def animate(self, i, line, stream, wf, MAX_y):
         Y_wave = self.strem_amplitude_to_wave_Y();
-        
-        mean_fragment = np.abs(np.mean(Y_wave));
-        self.save_noise(mean_fragment=mean_fragment); 
-        self.show_fragment(line=line, fragment=Y_wave, mean_fragment=mean_fragment)
+
+        if(self.get_percentage_of_max(mean_fragment=np.max(Y_wave)) > 1):
+           self.save_fragment(fragment=Y_wave)
+        elif(len(self.fragment) >= RATE / 4):
+            self.display_fragment(fragment=Y_wave, line=line)
+            self.clear_fragment()
+        else:
+            self.clear_fragment()    
 
         return line,
 

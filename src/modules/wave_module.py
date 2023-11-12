@@ -9,6 +9,7 @@ class Wave:
   def __init__(self):
       self.y_L = [];  
       self.y_R = [];
+      self.label = None;
   
   def on_data(self, y_L, y_R, y):
     self.y_L = y_L;
@@ -19,8 +20,12 @@ class Wave:
     y_data = line.get_ydata();
     new_y_data = y_data[len(Y):len(y_data)];
     line.set_ydata(np.concatenate((new_y_data, Y)))
+    mean = np.mean(np.abs(Y))
+    if(self.label.set_text):
+      percent = 0 if mean == 0 else int(mean / (MAX_AMPLITUDE) * 100)
+      self.label.set_text(u"A:{}/{}%".format(int(mean), percent))
     
-    return line,
+    return line, self.label
 
   def clear(self, line):
     return line,
@@ -35,6 +40,8 @@ class Wave:
     ax.yaxis.set_major_locator(ticker.NullLocator()) 
     
     line, = ax.plot(x_f, np.zeros(WAVE_RANGE - 1))
+    self.label = ax.text(0.1,0.9, "", bbox={'facecolor':'w', 'alpha':0, 'pad':5},
+                transform=ax.transAxes, ha="center")
 
     frames = None
     wf = None

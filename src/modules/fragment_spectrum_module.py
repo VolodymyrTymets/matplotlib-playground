@@ -14,6 +14,7 @@ class Fragmenter_Spectrum:
         self.line = None;
         self.MAX_y = None;
         self.title = None;
+        self.label = None;
         self.pattern = np.zeros(nFFT - 1)
 
     def conpare(self, Y1, Y2):
@@ -29,6 +30,7 @@ class Fragmenter_Spectrum:
         self.line.set_ydata(new_Y)
         simularity = self.conpare(new_Y, self.pattern);
         self.title.set_text(u"{}%".format(int(simularity)))
+        self.label.set_text(u"S:{}/{}".format(int(np.max(new_Y)), int(np.max(self.pattern))))
 
     def get_dafault_fragment(self):
         return self.dafault_fragment;  
@@ -37,7 +39,7 @@ class Fragmenter_Spectrum:
         return line, 
 
     def animate(self, i, line, stream, wf, MAX_y):
-        return line, self.title
+        return line, self.title, self.label
 
     def show_pattern_line(self, ax, x_f): 
           with open(str(PATH) + '/assets/nerve.csv', 'r', newline='') as file:
@@ -59,6 +61,8 @@ class Fragmenter_Spectrum:
 
 
         self.title = ax.text(0.95,0.5, "", bbox={'facecolor':'w', 'alpha':0, 'pad':5},
+                transform=ax.transAxes, ha="center")
+        self.label = ax.text(0.1,0.9, "", bbox={'facecolor':'w', 'alpha':0, 'pad':5},
                 transform=ax.transAxes, ha="center")
 
 

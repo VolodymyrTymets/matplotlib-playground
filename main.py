@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pyaudio
 import numpy as np
 import struct
+import platform
 
 import src.modules.spectrum_module as spectrum_module
 
@@ -45,6 +46,9 @@ def main():
   ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1])
 
 
+  if platform.system() == 'Linux':
+    mng = plt.get_current_fig_manager()
+    mng.window.overrideredirect(1)
   plt.show();
 
   stream.stop_stream()
