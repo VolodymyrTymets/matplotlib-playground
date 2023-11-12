@@ -1,21 +1,38 @@
 import numpy as np
 import matplotlib.animation as animation;
-import csv
 import pathlib
 import matplotlib.ticker as ticker
 
 from src.modules.config_module import nFFT, WAVE_RANGE, RATE, MAX_AMPLITUDE, CHANNELS, FPS
 
 PATH = pathlib.Path().resolve()
+COUNT_OF_FRAGMENTS = 5
 
 class Fragmenter_Spectrum:
     def __init__(self):
         self.dafault_fragment = np.zeros(nFFT - 1);
-        self.line = None;
+        self.fragment_line = None;
+        self.pattertn_line = None;
         self.MAX_y = None;
         self.title = None;
         self.label = None;
         self.pattern = np.zeros(nFFT - 1)
+        self.fragments = [];
+        self.mean_of_fragments = [];
+
+    def on_data(self, y):
+        y_L = y[::2]
+        y_R = y[1::2]
+        Y_L = np.fft.fft(y_L, nFFT)
+        Y_R = np.fft.fft(y_R, nFFT)
+        # Sewing FFT of two channels together, DC part uses right channel's
+        Y = abs(np.hstack((Y_L[int(-nFFT / 2):-1], Y_R[:int(nFFT / 2)]))) / self.MAX_y;
+        if(len(self.fragments) < COUNT_OF_FRAGMENTS):
+            self.fragments.append(Y);
+            self.mean_of_fragments = np.mean(np.array(self.fragments), axis=0)
+            self.display_pattertn_fragment(self.mean_of_fragments)
+        
+        self.display_fragment(Y)
 
     def conpare(self, Y1, Y2):
         persentage = [];
@@ -25,30 +42,23 @@ class Fragmenter_Spectrum:
             persentage.append(min(a, b) / max(a, b) * 100);    
         return np.mean(persentage);
 
-    def set_ydata(self, Y):
-        new_Y = Y / self.MAX_y;
-        self.line.set_ydata(new_Y)
-        simularity = self.conpare(new_Y, self.pattern);
+    def display_pattertn_fragment(self, Y):
+        self.pattertn_line.set_ydata(Y)
+
+    def display_fragment(self, Y):
+        self.fragment_line.set_ydata(Y)
+        simularity = self.conpare(Y, self.mean_of_fragments);
         self.title.set_text(u"{}%".format(int(simularity)))
-        self.label.set_text(u"S:{}/{}".format(int(np.max(new_Y)), int(np.max(self.pattern))))
+        self.label.set_text(u"S:{}/{}".format(int(np.max(Y)), int(np.max(self.pattern))))
 
     def get_dafault_fragment(self):
         return self.dafault_fragment;  
 
-    def clear(self, line):
-        return line, 
+    def clear(self, fragment_line, pattertn_line):
+        return fragment_line, pattertn_line
 
     def animate(self, i, line, stream, wf, MAX_y):
-        return line, self.title, self.label
-
-    def show_pattern_line(self, ax, x_f): 
-          with open(str(PATH) + '/assets/nerve.csv', 'r', newline='') as file:
-            reader = csv.reader(file)
-            for row in reader:
-              Y_srt = np.array(row)
-              Y = Y_srt.astype(float)
-              self.pattern = Y;
-              ax.plot(x_f, Y)
+        return line[0], line[1], self.title, self.label
 
     def init(self, fig, ax, sample_size):
         # Frequency range
@@ -66,19 +76,20 @@ class Fragmenter_Spectrum:
                 transform=ax.transAxes, ha="center")
 
 
-        line, = ax.plot(x_f, np.zeros(nFFT - 1))
-        self.show_pattern_line(ax=ax, x_f=x_f);
+        fragment_line, = ax.plot(x_f, self.dafault_fragment)
+        pattertn_line, = ax.plot(x_f, self.dafault_fragment)
         # Because of saving wave, paInt16 will be easier.
         MAX_y = 2.0 ** (sample_size * 8 - 1) * 2
         self.MAX_y = MAX_y
 
-        self.line = line;
+        self.fragment_line = fragment_line;
+        self.pattertn_line = pattertn_line;
         frames = None
         wf = None
         stream = None
         ani = animation.FuncAnimation(
             fig, self.animate, frames,
-            init_func=lambda: self.clear(line), fargs=(line, stream, wf, MAX_y),
+            init_func=lambda: self.clear(fragment_line, pattertn_line), fargs=([fragment_line, pattertn_line], stream, wf, MAX_y),
             cache_frame_data=False,
             interval=1000.0 / FPS, blit=True
         )

@@ -22,7 +22,7 @@ def main():
   fig, axs = plt.subplots(2, 2, layout='constrained')
   fragmenter_spectrum = Fragmenter_Spectrum();
   wave = Wave();
-  fragmenter = Fragmenter(fragmenter_spectrum);
+  fragmenter = Fragmenter([fragmenter_spectrum.on_data]);
   mic = Mic([wave.on_data, fragmenter.on_data]);
 
   # Start listening to the microphone
@@ -46,9 +46,9 @@ def main():
   ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1])
 
 
-  if platform.system() == 'Linux':
-    mng = plt.get_current_fig_manager()
-    mng.window.overrideredirect(1)
+  # if platform.system() == 'Linux':
+  #   mng = plt.get_current_fig_manager()
+  #   mng.window.overrideredirect(1)
   plt.show();
 
   stream.stop_stream()

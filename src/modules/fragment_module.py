@@ -5,12 +5,12 @@ import matplotlib.ticker as ticker
 from src.modules.config_module import nFFT, WAVE_RANGE, RATE, MAX_AMPLITUDE, CHANNELS, FPS
 
 class Fragmenter:
-    def __init__(self, fragmenter_spectrum):
+    def __init__(self, callbacks):
+        self.callbacks = callbacks
         self.fragment = [];
         self.spectr_fragment = [];
         self.dafault_fragment = np.zeros(int(RATE / 16));
         self.x_lendth = int(RATE / 16);
-        self.fragmenter_spectrum = fragmenter_spectrum;
         self.y_L = [];  
         self.y_R = [];
         self.y = [];
@@ -33,17 +33,14 @@ class Fragmenter:
         return res;
 
     def save_fragment(self, fragment):
-        print('--save---->')
         new_fragment = np.concatenate((self.fragment, fragment));
         self.fragment = new_fragment;
 
         new_spectrum_fragment = np.concatenate((self.spectr_fragment, self.y));
         self.spectr_fragment = new_spectrum_fragment;
     
-    def display_fragment(self, fragment, line):
-        print('--display---->')
+    def display_fragment(self, line):
         # dispaly amplitude
-        print('--display---->', len(self.fragment))
         fragment_cut = self.cat_mid(self.fragment, WAVE_RANGE)
         to_Dispaly = fragment_cut[::16];
         diff = int(self.x_lendth) - len(to_Dispaly);
@@ -56,9 +53,10 @@ class Fragmenter:
         
         # dispaly spectrum
         fragment_cut = self.cat_mid(self.spectr_fragment, RATE)
-        ## todo: vova move to on_data in fragmenter_spectrum
-        Y_spectrum = self.strem_amplitude_to_spectr_Y(fragment_cut)
-        self.fragmenter_spectrum.set_ydata(Y_spectrum);
+        # call listeneres on fragment
+        for i in range(len(self.callbacks)):
+            callback = self.callbacks[i]
+            callback(fragment_cut)
     
     def clear_fragment(self):
         #print('--clear---->')  
@@ -69,22 +67,12 @@ class Fragmenter:
     def strem_amplitude_to_wave_Y(self):
         return np.hstack((self.y_L, self.y_R));
 
-    def strem_amplitude_to_spectr_Y(self, y):
-        y_L = y[::2]
-        y_R = y[1::2]
-        Y_L = np.fft.fft(y_L, nFFT)
-        Y_R = np.fft.fft(y_R, nFFT)
-        # Sewing FFT of two channels together, DC part uses right channel's
-        Y = abs(np.hstack((Y_L[int(-nFFT / 2):-1], Y_R[:int(nFFT / 2)])))
-        return Y;
-
     def animate(self, i, line, stream, wf, MAX_y):
         Y_wave = self.strem_amplitude_to_wave_Y();
-
-        if(self.get_percentage_of_max(mean_fragment=np.max(Y_wave)) > 1):
+        if(self.get_percentage_of_max(mean_fragment=np.max(Y_wave)) > 1 and len(self.fragment) < RATE):
            self.save_fragment(fragment=Y_wave)
-        elif(len(self.fragment) >= RATE / 4):
-            self.display_fragment(fragment=Y_wave, line=line)
+        elif(len(self.fragment) >= RATE / 2):
+            self.display_fragment(line=line)
             self.clear_fragment()
         else:
             self.clear_fragment()    
