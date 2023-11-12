@@ -1,7 +1,7 @@
 import pyaudio
 
 WIDTH = 800
-HEIGHT = 480
+HEIGHT = 400
 FPS = 25.0
 
 nFFT = 512
