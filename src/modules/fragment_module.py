@@ -89,9 +89,10 @@ class Fragmenter:
         ax.set_xlim(x_f[0], x_f[-1]);
         ax.set_ylim(-1 * MAX_AMPLITUDE, MAX_AMPLITUDE);  
         ax.yaxis.set_major_locator(ticker.NullLocator()) 
-        ax.xaxis.set_major_locator(ticker.NullLocator()) 
+        ax.xaxis.set_major_locator(ticker.NullLocator())
+        ax.set_facecolor('#c0c0c0')
 
-        line, = ax.plot(x_f, self.dafault_fragment)
+        line, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color="#3232c8")
 
         frames = None
         wf = None

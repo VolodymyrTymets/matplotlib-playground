@@ -37,9 +37,10 @@ class Wave:
     ax.set_xlim(x_f[0], x_f[-1]);
     ax.set_ylim(-1 *  MAX_AMPLITUDE, MAX_AMPLITUDE); 
     ax.xaxis.set_major_locator(ticker.NullLocator()) 
-    ax.yaxis.set_major_locator(ticker.NullLocator()) 
+    ax.yaxis.set_major_locator(ticker.NullLocator())
+    ax.set_facecolor('#c0c0c0')
     
-    line, = ax.plot(x_f, np.zeros(WAVE_RANGE - 1))
+    line, = ax.plot(x_f, np.zeros(WAVE_RANGE - 1), linewidth=1, color="#3232c8")
     self.label = ax.text(0.1,0.9, "", bbox={'facecolor':'w', 'alpha':0, 'pad':5},
                 transform=ax.transAxes, ha="center")
 
