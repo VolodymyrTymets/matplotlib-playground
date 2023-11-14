@@ -18,6 +18,7 @@ def main():
   dpi = plt.rcParams['figure.dpi']
   plt.rcParams['savefig.dpi'] = dpi
   plt.rcParams["figure.figsize"] = (1.0 * WIDTH / dpi, 1.0 * HEIGHT / dpi)
+  plt.rcParams['figure.facecolor'] = 'black'
 
   fig, axs = plt.subplots(2, 2, layout='constrained')
   fragmenter_spectrum = Fragmenter_Spectrum();
@@ -46,9 +47,9 @@ def main():
   ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1])
 
 
-  # if platform.system() == 'Linux':
-  #   mng = plt.get_current_fig_manager()
-  #   mng.window.overrideredirect(1)
+  if platform.system() == 'Linux':
+    mng = plt.get_current_fig_manager()
+    mng.window.overrideredirect(1)
   plt.show();
 
   stream.stop_stream()
