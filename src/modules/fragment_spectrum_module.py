@@ -41,6 +41,8 @@ class Fragmenter_Spectrum:
         Y = abs(np.hstack((Y_L[int(-nFFT / 2):-1], Y_R[:int(nFFT / 2)]))) / self.MAX_y;
         if(len(self.fragments) < COUNT_OF_FRAGMENTS):
             self.fragments.append(Y);
+            ## todo: vova save max of each fragment do not save mean
+            ## save each fragment induvidually and calculate mean only on display
             self.mean_of_fragments = np.mean(np.array(self.fragments), axis=0)
             self.display_pattertn_fragment(self.mean_of_fragments)
         self.display_fragment(Y)

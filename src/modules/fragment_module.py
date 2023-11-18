@@ -2,15 +2,18 @@ import numpy as np
 import matplotlib.animation as animation;
 import matplotlib.ticker as ticker
 
-from src.modules.config_module import nFFT, WAVE_RANGE, RATE, MAX_AMPLITUDE, CHANNELS, FPS
+from src.modules.config_module import nFFT, THRESHOLD_OF_SILENCE, RATE, MAX_AMPLITUDE, FPS
+# rate = 1 seconds
+MAX_FRAGMENT_LENGTH = RATE * 2
+MIN_FRAGMENT_LENGTH = RATE / 8
 
 class Fragmenter:
     def __init__(self, callbacks):
         self.callbacks = callbacks
         self.fragment = [];
         self.spectr_fragment = [];
-        self.dafault_fragment = np.zeros(int(RATE / 16));
-        self.x_lendth = int(RATE / 16);
+        self.dafault_fragment = np.zeros(int(MAX_FRAGMENT_LENGTH / 16));
+        self.x_lendth = int(MAX_FRAGMENT_LENGTH / 16);
         self.y_L = [];  
         self.y_R = [];
         self.y = [];
@@ -21,7 +24,7 @@ class Fragmenter:
         self.y = y;
     
     def get_percentage_of_max(self, mean_fragment):
-        return 0 if mean_fragment == 0 else int(mean_fragment / (MAX_AMPLITUDE) * 100)
+        return 0 if mean_fragment == 0 else mean_fragment / (MAX_AMPLITUDE) * 100
     
     def cat_mid(self, y, length):
         length_half = int(length / 2)
@@ -41,7 +44,7 @@ class Fragmenter:
     
     def display_fragment(self, line):
         # dispaly amplitude
-        fragment_cut = self.cat_mid(self.fragment, WAVE_RANGE)
+        fragment_cut = self.cat_mid(self.fragment, MAX_FRAGMENT_LENGTH)
         to_Dispaly = fragment_cut[::16];
         diff = int(self.x_lendth) - len(to_Dispaly);
         if(diff > 0):
@@ -52,7 +55,7 @@ class Fragmenter:
             line.set_ydata(to_Dispaly[0: self.x_lendth])
         
         # dispaly spectrum
-        fragment_cut = self.cat_mid(self.spectr_fragment, RATE)
+        fragment_cut = self.cat_mid(self.spectr_fragment, MAX_FRAGMENT_LENGTH)
         # call listeneres on fragment
         for i in range(len(self.callbacks)):
             callback = self.callbacks[i]
@@ -69,11 +72,18 @@ class Fragmenter:
 
     def animate(self, i, line, stream, wf, MAX_y):
         Y_wave = self.strem_amplitude_to_wave_Y();
-        if(self.get_percentage_of_max(mean_fragment=np.max(Y_wave)) > 1 and len(self.fragment) < RATE):
+        percentage = self.get_percentage_of_max(mean_fragment=np.mean(np.abs(Y_wave)));
+        len_fragment = len(self.fragment)
+        is_start = (len_fragment < MIN_FRAGMENT_LENGTH)
+        is_tail = (len_fragment > MIN_FRAGMENT_LENGTH and len_fragment < MAX_FRAGMENT_LENGTH)
+        is_end = (len_fragment >= MAX_FRAGMENT_LENGTH)
+        if(percentage > THRESHOLD_OF_SILENCE and is_start):
            self.save_fragment(fragment=Y_wave)
-        elif(len(self.fragment) >= RATE / 2):
+        elif(is_tail):
+            self.save_fragment(fragment=Y_wave)
+        elif(is_end):
             self.display_fragment(line=line)
-            self.clear_fragment()
+            self.clear_fragment();
         else:
             self.clear_fragment()    
 
