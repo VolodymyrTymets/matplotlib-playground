@@ -2,27 +2,23 @@ import numpy as np
 import matplotlib.animation as animation;
 import matplotlib.ticker as ticker
 
-from src.modules.config_module import nFFT, THRESHOLD_OF_SILENCE, MAX_FRAGMENT_LENGTH, MIN_FRAGMENT_LENGTH, MAX_AMPLITUDE, FPS
+from src.modules.config_module import nFFT, MAX_AMPLITUDE, MAX_FRAGMENT_LENGTH, FPS, COUNT_OF_FRAGMENTS
 
 
-class Fragmenter:
-    def __init__(self, callbacks):
-        self.callbacks = callbacks
+class PatternFragmenter:
+    def __init__(self):
         self.fragment = [];
         self.spectr_fragment = [];
         self.dafault_fragment = np.zeros(int(MAX_FRAGMENT_LENGTH / 16));
         self.x_lendth = int(MAX_FRAGMENT_LENGTH / 16);
-        self.y_L = [];  
-        self.y_R = [];
         self.y = [];
+        self.count_of_fragment = 0
+        
+        self.label = None;
     
-    def on_data(self, y_L, y_R, y):
-        self.y_L = y_L;
-        self.y_R = y_R
+    def on_data(self, y):
+        self.count_of_fragment = self.count_of_fragment + 1
         self.y = y;
-    
-    def get_percentage_of_max(self, mean_fragment):
-        return 0 if mean_fragment == 0 else mean_fragment / (MAX_AMPLITUDE) * 100
     
     def cat_mid(self, y, length):
         length_half = int(length / 2)
@@ -32,17 +28,10 @@ class Fragmenter:
         end = mid + length_half if mid + length_half < all else all
         res = y[start:end];
         return res;
-
-    def save_fragment(self, fragment):
-        new_fragment = np.concatenate((self.fragment, fragment));
-        self.fragment = new_fragment;
-
-        new_spectrum_fragment = np.concatenate((self.spectr_fragment, self.y));
-        self.spectr_fragment = new_spectrum_fragment;
     
     def display_fragment(self, line):
         # dispaly amplitude
-        fragment_cut = self.cat_mid(self.fragment, MAX_FRAGMENT_LENGTH)
+        fragment_cut = self.cat_mid(self.y, MAX_FRAGMENT_LENGTH)
         to_Dispaly = fragment_cut[::16];
         diff = int(self.x_lendth) - len(to_Dispaly);
         if(diff > 0):
@@ -54,38 +43,18 @@ class Fragmenter:
         
         # dispaly spectrum
         fragment_cut = self.cat_mid(self.spectr_fragment, MAX_FRAGMENT_LENGTH)
-        # call listeneres on fragment
-        for i in range(len(self.callbacks)):
-            callback = self.callbacks[i]
-            callback(fragment_cut)
     
     def clear_fragment(self):
-        #print('--clear---->')  
         self.fragment = [];
         self.spectr_fragment = [];
         
 
-    def strem_amplitude_to_wave_Y(self):
-        return np.hstack((self.y_L, self.y_R));
-
     def animate(self, i, line, stream, wf, MAX_y):
-        Y_wave = self.strem_amplitude_to_wave_Y();
-        percentage = self.get_percentage_of_max(mean_fragment=np.mean(np.abs(Y_wave)));
-        len_fragment = len(self.fragment)
-        is_start = (len_fragment < MIN_FRAGMENT_LENGTH)
-        is_tail = (len_fragment > MIN_FRAGMENT_LENGTH and len_fragment < MAX_FRAGMENT_LENGTH)
-        is_end = (len_fragment >= MAX_FRAGMENT_LENGTH)
-        if(percentage > THRESHOLD_OF_SILENCE and is_start):
-           self.save_fragment(fragment=Y_wave)
-        elif(is_tail):
-            self.save_fragment(fragment=Y_wave)
-        elif(is_end):
-            self.display_fragment(line=line)
-            self.clear_fragment();
-        else:
-            self.clear_fragment()    
+        self.display_fragment(line=line)
+        if(self.label.set_text):
+            self.label.set_text(u"Adjusting:{}/{}".format(COUNT_OF_FRAGMENTS, self.count_of_fragment))
 
-        return line,
+        return line, self.label
 
     def clear(self, line):
         return line,
@@ -101,6 +70,8 @@ class Fragmenter:
         ax.set_facecolor('#c0c0c0')
 
         line, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color="#3232c8")
+        self.label = ax.text(0.2,0.9, "", bbox={'facecolor':'w', 'alpha':0, 'pad':5},
+            transform=ax.transAxes, ha="center")
 
         frames = None
         wf = None
@@ -110,7 +81,7 @@ class Fragmenter:
             fig, self.animate, frames,
             init_func=lambda: self.clear(line), fargs=(line, stream, wf, MAX_y),
             cache_frame_data=False,
-            interval=1000.0 / FPS, blit=True
+            interval=1000.0 / 2, blit=True
         )
         return ani;
 

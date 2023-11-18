@@ -3,19 +3,23 @@ import matplotlib.animation as animation;
 import pathlib
 import matplotlib.ticker as ticker
 
-from src.modules.config_module import nFFT, RATE, FPS, WIDTH, AREA_RANGE
+from src.modules.config_module import nFFT, RATE, FPS, WIDTH, AREA_RANGE, COUNT_OF_FRAGMENTS
 
 
 PATH = pathlib.Path().resolve()
-COUNT_OF_FRAGMENTS = 5
+
 RIGHT_CHART_POSITION = (((WIDTH / 2) - 40) / 2) - 30;
 
 class Fragmenter_Spectrum:
-    def __init__(self):
+    def __init__(self, callbacks):
+        self.callbacks = callbacks
         self.dafault_fragment = np.zeros(nFFT - 1);
         self.MAX_y = None;
-        self.fragments = [];
-        self.mean_of_fragments = [];
+        self.exlude_indexses = [];
+        self.fragments_w = [];
+        self.fragments_s = [];
+        self.fragmet_s_max = [];
+        self.mean_of_fragments_s = [];
         
         # lines
         self.fragment_line = None;
@@ -32,20 +36,51 @@ class Fragmenter_Spectrum:
     def getAnimateObject(self): 
        return self.fragment_line, self.pattertn_line, self.fragment_line_X, self.pattertn_line_X_bottom, self.pattertn_line_X_top, self.pattertn_line_X_annotaion_BR, self.pattertn_line_X_annotaion_TR, self.fragment_line_X_annotaion,
     
-    def on_data(self, y):
+
+    def strem_amplitude_to_spectrum_Y(self, y):
         y_L = y[::2]
         y_R = y[1::2]
         Y_L = np.fft.fft(y_L, nFFT)
         Y_R = np.fft.fft(y_R, nFFT)
         # Sewing FFT of two channels together, DC part uses right channel's
-        Y = abs(np.hstack((Y_L[int(-nFFT / 2):-1], Y_R[:int(nFFT / 2)]))) / self.MAX_y;
-        if(len(self.fragments) < COUNT_OF_FRAGMENTS):
-            self.fragments.append(Y);
-            ## todo: vova save max of each fragment do not save mean
-            ## save each fragment induvidually and calculate mean only on display
-            self.mean_of_fragments = np.mean(np.array(self.fragments), axis=0)
-            self.display_pattertn_fragment(self.mean_of_fragments)
-        self.display_fragment(Y)
+        return abs(np.hstack((Y_L[int(-nFFT / 2):-1], Y_R[:int(nFFT / 2)]))) / self.MAX_y;
+    
+    def find_most_diff(self, y):
+        if(len(y) % 3 == 0):
+            mean =np.mean(y);
+            diff = [abs(mean - x) for x in y];
+            max_index = diff.index(max(diff))
+            self.exlude_indexses.append(max_index);
+    
+    def without_exlude(self, y):
+        res = []
+        for i, item in enumerate(y):
+          if i not in self.exlude_indexses:
+              res.append(item);
+        return res;
+        
+
+    def on_data(self, y):
+        spectrum = self.strem_amplitude_to_spectrum_Y(y=y)
+        wave = y
+        
+        if(len(self.fragments_s) < COUNT_OF_FRAGMENTS):
+            self.fragments_s.append(spectrum);
+            self.fragments_w.append(wave);
+            self.fragmet_s_max.append(np.max(spectrum))
+            self.find_most_diff(self.fragmet_s_max)
+        
+            simular_spectrums = self.without_exlude(self.fragments_s)
+            self.mean_of_fragments_s = np.mean(np.array(simular_spectrums), axis=0)
+            self.display_pattertn_fragment(self.mean_of_fragments_s)
+            simular_wawes = self.without_exlude(self.fragments_w)
+             # call listeneres on fragment
+            for i in range(len(self.callbacks)):
+                callback = self.callbacks[i]
+                callback(np.mean(np.array(simular_wawes), axis=0))
+
+        self.display_fragment(spectrum)
+     
 
     def conpare(self, Y1, Y2):
         persentage = [];

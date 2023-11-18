@@ -7,6 +7,7 @@ import platform
 import src.modules.spectrum_module as spectrum_module
 
 from src.modules.fragment_module import Fragmenter
+from src.modules.pattern_fragment_module import PatternFragmenter
 from src.modules.wave_module import Wave
 from src.modules.mic_module import Mic
 from src.modules.fragment_spectrum_module import Fragmenter_Spectrum
@@ -20,8 +21,8 @@ def main():
   plt.rcParams["figure.figsize"] = (1.0 * WIDTH / dpi, 1.0 * HEIGHT / dpi)
   plt.rcParams['figure.facecolor'] = 'black'
 
-  fig, axs = plt.subplots(2, 2, layout='constrained')
-  fragmenter_spectrum = Fragmenter_Spectrum();
+  pattern_fragmenter = PatternFragmenter();
+  fragmenter_spectrum = Fragmenter_Spectrum([pattern_fragmenter.on_data]);
   wave = Wave();
   fragmenter = Fragmenter([fragmenter_spectrum.on_data]);
   mic = Mic([wave.on_data, fragmenter.on_data]);
@@ -36,16 +37,24 @@ def main():
                   frames_per_buffer=BUF_SIZE,
                   stream_callback=mic.callback)
   stream.start_stream();
-  gs = axs[0, 0].get_gridspec()
-  axs[0][0].remove()
-  axs[0][1].remove()
-  ax_row = fig.add_subplot(gs[0, 0:])
-  
 
-  ani_wave = wave.init(fig=fig, ax=ax_row)
-  ani_spectrum = fragmenter_spectrum.init(fig=fig, ax=axs[1][0], sample_size=p.get_sample_size(FORMAT))
-  ani_fragment = fragmenter.init(fig=fig, ax=axs[1][1])
+  fig = plt.figure(layout="constrained")
+  axd = fig.subplot_mosaic(
+    """
+    AAA
+    BBC
+    BBD
+    """
+  ) 
+  axs = [];
 
+  for k, ax in axd.items():
+    axs.append(ax)
+
+  ani_wave = wave.init(fig=fig, ax=axs[0])
+  ani_spectrum = fragmenter_spectrum.init(fig=fig, ax=axs[1], sample_size=p.get_sample_size(FORMAT))
+  ani_fragment = fragmenter.init(fig=fig, ax=axs[2])
+  ani_pattern_fragmenter = pattern_fragmenter.init(fig=fig, ax=axs[3])
 
   if platform.system() == 'Linux':
     mng = plt.get_current_fig_manager()
