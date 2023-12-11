@@ -8,6 +8,7 @@ import src.modules.spectrum_module as spectrum_module
 
 from src.modules.fragment_module import Fragmenter
 from src.modules.pattern_fragment_module import PatternFragmenter
+from src.modules.theme_module import Theme_Module
 from src.modules.wave_module import Wave
 from src.modules.mic_module import Mic
 from src.modules.fragment_spectrum_module import Fragmenter_Spectrum
@@ -15,17 +16,21 @@ from src.modules.config_module import CHANNELS, WIDTH, HEIGHT, RATE, FORMAT, BUF
 
 
 def main():
+  theme = Theme_Module();
   plt.rcParams['toolbar'] = 'None'
   dpi = plt.rcParams['figure.dpi']
   plt.rcParams['savefig.dpi'] = dpi
   plt.rcParams["figure.figsize"] = (1.0 * WIDTH / dpi, 1.0 * HEIGHT / dpi)
-  plt.rcParams['figure.facecolor'] = 'black'
+  plt.rcParams['figure.facecolor'] = theme.get_face_color();
 
-  pattern_fragmenter = PatternFragmenter();
-  fragmenter_spectrum = Fragmenter_Spectrum([pattern_fragmenter.on_data]);
-  wave = Wave();
-  fragmenter = Fragmenter([fragmenter_spectrum.on_data]);
+  wave = Wave(theme);
+  pattern_fragmenter = PatternFragmenter(theme);
+  fragmenter_spectrum = Fragmenter_Spectrum(theme, [pattern_fragmenter.on_data]);
+  fragmenter = Fragmenter(theme, [fragmenter_spectrum.on_data]);
   mic = Mic([wave.on_data, fragmenter.on_data]);
+
+  fragmenter_spectrum.on_beetwen(fragmenter.on_between)
+  fragmenter_spectrum.on_upper(fragmenter.on_upper)
 
   # Start listening to the microphone
   p = pyaudio.PyAudio();
@@ -38,7 +43,7 @@ def main():
                   stream_callback=mic.callback)
   stream.start_stream();
 
-  fig = plt.figure(layout="constrained")
+  fig = plt.figure(layout="constrained", edgecolor=None)
   axd = fig.subplot_mosaic(
     """
     AAA

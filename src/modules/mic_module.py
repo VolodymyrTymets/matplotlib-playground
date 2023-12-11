@@ -3,7 +3,7 @@ import struct
 import matplotlib.animation as animation;
 import pyaudio
 
-from src.modules.config_module import CHANNELS, nFFT, WAVE_RANGE, RATE, FPS, BUF_SIZE
+from src.modules.config_module import nFFT, BUF_SIZE
 
 class Mic:
   def __init__(self, callbacks):

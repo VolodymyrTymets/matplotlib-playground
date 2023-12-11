@@ -6,7 +6,8 @@ from src.modules.config_module import nFFT, THRESHOLD_OF_SILENCE, MAX_FRAGMENT_L
 
 
 class Fragmenter:
-    def __init__(self, callbacks):
+    def __init__(self, theme, callbacks):
+        self.theme = theme;
         self.callbacks = callbacks
         self.fragment = [];
         self.spectr_fragment = [];
@@ -15,6 +16,8 @@ class Fragmenter:
         self.y_L = [];  
         self.y_R = [];
         self.y = [];
+        
+        self.line = None
     
     def on_data(self, y_L, y_R, y):
         self.y_L = y_L;
@@ -51,6 +54,8 @@ class Fragmenter:
             line.set_ydata(y[0:self.x_lendth])
         else:
             line.set_ydata(to_Dispaly[0: self.x_lendth])
+
+        self.line.set_color(self.theme.get_line_color())
         
         # dispaly spectrum
         fragment_cut = self.cat_mid(self.spectr_fragment, MAX_FRAGMENT_LENGTH)
@@ -58,11 +63,20 @@ class Fragmenter:
         for i in range(len(self.callbacks)):
             callback = self.callbacks[i]
             callback(fragment_cut)
+
+        
     
     def clear_fragment(self):
         #print('--clear---->')  
         self.fragment = [];
         self.spectr_fragment = [];
+    
+    ## need change color if stectrum between AREA_RANGE
+    def on_between(self, max):
+        self.line.set_color(self.theme.get_warning_color())
+    ## need change color if stectrum upper AREA_RANGE
+    def on_upper(self, max):
+        self.line.set_color(self.theme.get_dange_color())
         
 
     def strem_amplitude_to_wave_Y(self):
@@ -98,9 +112,14 @@ class Fragmenter:
         ax.set_ylim(-1 * MAX_AMPLITUDE, MAX_AMPLITUDE);  
         ax.yaxis.set_major_locator(ticker.NullLocator()) 
         ax.xaxis.set_major_locator(ticker.NullLocator())
-        ax.set_facecolor('#c0c0c0')
+        ax.set_facecolor(self.theme.get_face_color())
+        ax.spines['top'].set_color(self.theme.get_border_color())
+        ax.spines['bottom'].set_color(self.theme.get_border_color())
+        ax.spines['left'].set_color(self.theme.get_border_color())
+        ax.spines['right'].set_color(self.theme.get_border_color())
 
-        line, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color="#3232c8")
+        line, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color=self.theme.get_line_color())
+        self.line = line
 
         frames = None
         wf = None

@@ -6,7 +6,8 @@ from src.modules.config_module import nFFT, MAX_AMPLITUDE, MAX_FRAGMENT_LENGTH, 
 
 
 class PatternFragmenter:
-    def __init__(self):
+    def __init__(self, theme):
+        self.theme = theme;
         self.fragment = [];
         self.spectr_fragment = [];
         self.dafault_fragment = np.zeros(int(MAX_FRAGMENT_LENGTH / 16));
@@ -67,11 +68,15 @@ class PatternFragmenter:
         ax.set_ylim(-1 * MAX_AMPLITUDE, MAX_AMPLITUDE);  
         ax.yaxis.set_major_locator(ticker.NullLocator()) 
         ax.xaxis.set_major_locator(ticker.NullLocator())
-        ax.set_facecolor('#c0c0c0')
+        ax.set_facecolor(self.theme.get_face_color())
+        ax.spines['top'].set_color(self.theme.get_border_color())
+        ax.spines['bottom'].set_color(self.theme.get_border_color())
+        ax.spines['left'].set_color(self.theme.get_border_color())
+        ax.spines['right'].set_color(self.theme.get_border_color())
 
-        line, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color="#3232c8")
+        line, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color=self.theme.get_line_color())
         self.label = ax.text(0.2,0.9, "", bbox={'facecolor':'w', 'alpha':0, 'pad':5},
-            transform=ax.transAxes, ha="center")
+            transform=ax.transAxes, ha="center", color=self.theme.get_text_color())
 
         frames = None
         wf = None

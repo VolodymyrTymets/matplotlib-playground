@@ -11,7 +11,8 @@ PATH = pathlib.Path().resolve()
 RIGHT_CHART_POSITION = (((WIDTH / 2) - 40) / 2) - 30;
 
 class Fragmenter_Spectrum:
-    def __init__(self, callbacks):
+    def __init__(self, theme, callbacks):
+        self.theme = theme;
         self.callbacks = callbacks
         self.dafault_fragment = np.zeros(nFFT - 1);
         self.MAX_y = None;
@@ -20,6 +21,10 @@ class Fragmenter_Spectrum:
         self.fragments_s = [];
         self.fragmet_s_max = [];
         self.mean_of_fragments_s = [];
+        self.max_top = None;
+        self.max_bottom = None;
+        self.on_between_callback = None;
+        self.on_upper_callback = None;
         
         # lines
         self.fragment_line = None;
@@ -106,6 +111,8 @@ class Fragmenter_Spectrum:
         self.pattertn_line_X_annotaion_TR.set_text(round(max_top, 2));
         self.pattertn_line_X_annotaion_TR.set_position((RIGHT_CHART_POSITION, max_top))
         self.pattertn_line_X_annotaion_TR.xy = (RIGHT_CHART_POSITION, max_top)
+        self.max_top = max_top
+        self.max_bottom = max_bottom
 
     def display_fragment(self, Y):
         max = np.max(Y)
@@ -115,6 +122,18 @@ class Fragmenter_Spectrum:
         self.fragment_line_X_annotaion.set_text(int(max))
         self.fragment_line_X_annotaion.set_position((0,max))
         self.fragment_line_X_annotaion.xy = (0, max)
+        self.fragment_line_X.set_color(self.theme.get_line_color())
+        self.fragment_line.set_color(self.theme.get_line_color())
+
+        if(self.max_bottom and self.max_top and len(self.fragments_s) >= COUNT_OF_FRAGMENTS):
+            if(max < self.max_top and max > self.max_bottom and self.on_between_callback):
+              self.on_between_callback(max);
+              self.fragment_line_X.set_color(self.theme.get_warning_color())
+              self.fragment_line.set_color(self.theme.get_warning_color())
+            if(max > self.max_top and self.on_upper_callback):
+              self.on_upper_callback(max)
+              self.fragment_line_X.set_color(self.theme.get_dange_color())
+              self.fragment_line.set_color(self.theme.get_dange_color())
 
     def get_dafault_fragment(self):
         return self.dafault_fragment;  
@@ -124,6 +143,11 @@ class Fragmenter_Spectrum:
 
     def animate(self, i, line, stream, wf, MAX_y):
          return self.getAnimateObject()
+    
+    def on_beetwen(self, callback):
+        self.on_between_callback = callback;
+    def on_upper(self, callback):
+        self.on_upper_callback = callback;
 
     def init(self, fig, ax, sample_size):
         # Frequency range
@@ -134,15 +158,20 @@ class Fragmenter_Spectrum:
         ax.set_ylim(0, 2 * np.pi * nFFT ** 2 / RATE);
         ax.xaxis.set_major_locator(ticker.NullLocator())
         ax.yaxis.set_major_locator(ticker.NullLocator())
+        ax.set_facecolor(self.theme.get_face_color())
+        ax.spines['top'].set_color(self.theme.get_border_color())
+        ax.spines['bottom'].set_color(self.theme.get_border_color())
+        ax.spines['left'].set_color(self.theme.get_border_color())
+        ax.spines['right'].set_color(self.theme.get_border_color())
 
         fragment_line, = ax.plot(x_f, self.dafault_fragment, linewidth=1)
-        pattertn_line, = ax.plot(x_f, self.dafault_fragment, linestyle='dashed', linewidth=1, color="teal")
-        fragment_line_X, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color="blue")
-        pattertn_line_X_bottom, = ax.plot(x_f, self.dafault_fragment, linestyle='dashed', linewidth=1, color="teal")
-        pattertn_line_X_top, = ax.plot(x_f, self.dafault_fragment, linestyle='dashed', linewidth=1, color="teal")
-        pattertn_line_X_annotaion_BR = ax.annotate('', xy=(0, 0), xycoords='data', xytext=(0, 0), textcoords='offset pixels')
-        pattertn_line_X_annotaion_TR = ax.annotate('', xy=(0, 0), xycoords='data', xytext=(0, 0), textcoords='offset pixels')
-        fragment_line_X_annotaion = ax.annotate('', xy=(0, 0), xycoords='data', xytext=(0, 0), textcoords='offset pixels')
+        pattertn_line, = ax.plot(x_f, self.dafault_fragment, linestyle='dashed', linewidth=1, color=self.theme.get_teal_color())
+        fragment_line_X, = ax.plot(x_f, self.dafault_fragment, linewidth=1, color=self.theme.get_line_color())
+        pattertn_line_X_bottom, = ax.plot(x_f, self.dafault_fragment, linestyle='dashed', linewidth=1, color=self.theme.get_warning_color())
+        pattertn_line_X_top, = ax.plot(x_f, self.dafault_fragment, linestyle='dashed', linewidth=1, color=self.theme.get_dange_color())
+        pattertn_line_X_annotaion_BR = ax.annotate('', xy=(0, 0), xycoords='data', xytext=(0, 0), textcoords='offset pixels', color=self.theme.get_text_color())
+        pattertn_line_X_annotaion_TR = ax.annotate('', xy=(0, 0), xycoords='data', xytext=(0, 0), textcoords='offset pixels', color=self.theme.get_text_color())
+        fragment_line_X_annotaion = ax.annotate('', xy=(0, 0), xycoords='data', xytext=(0, 0), textcoords='offset pixels', color=self.theme.get_text_color())
         # Because of saving wave, paInt16 will be easier.
         MAX_y = 2.0 ** (sample_size * 8 - 1) * 2
         self.MAX_y = MAX_y
